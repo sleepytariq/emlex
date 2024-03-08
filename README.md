@@ -7,7 +7,7 @@ A tool to extract attachments from .eml files
 - Download a prebuilt binary from [release page](https://github.com/illbison/emlex/releases/latest)
 
   _or_
-- `git clone https://github.com/illbison/emlex && cd access2csv && go build -ldflags="-s -w" .`
+- `git clone https://github.com/illbison/emlex && cd emlex && go build -ldflags="-s -w" .`
 
 ## Usage
 
