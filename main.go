@@ -83,7 +83,7 @@ func ShowVersion() {
 }
 
 func ShowHelp() {
-	fmt.Println(`emlex [-h] [-v] email [email...]
+	fmt.Println(`emlex email [email...]
 	
     Extract attachments from multiple .eml files
 
