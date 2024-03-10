@@ -70,10 +70,12 @@ func main() {
 
 		fmt.Printf("(%d) %s\n", len(msg.Attachments), email)
 
-		for _, attachment := range msg.Attachments {
-			dir := filepath.Join(fmt.Sprintf("%s_emlex", ts), strings.Split(filepath.Base(email), ".eml")[0])
+		if len(msg.Attachments) > 0 {
+			dir := filepath.Join(fmt.Sprintf("%s_emlex", ts), strings.TrimSuffix(filepath.Base(email), filepath.Ext(email)))
 			os.MkdirAll(dir, os.ModePerm)
-			os.WriteFile(filepath.Join(dir, attachment.FileName), attachment.Content, 0644)
+			for _, attachment := range msg.Attachments {
+				os.WriteFile(filepath.Join(dir, attachment.FileName), attachment.Content, 0644)
+			}
 		}
 	}
 }
