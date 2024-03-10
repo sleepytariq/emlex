@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"time"
 
@@ -19,14 +18,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	if slices.Contains(os.Args[1:], "-h") || slices.Contains(os.Args[1:], "--help") {
-		ShowHelp()
-		os.Exit(0)
-	}
-
-	if slices.Contains(os.Args[1:], "-v") || slices.Contains(os.Args[1:], "--version") {
-		ShowVersion()
-		os.Exit(0)
+	for _, arg := range os.Args[1:] {
+		if arg == "-h" || arg == "--help" {
+			ShowHelp()
+			os.Exit(0)
+		}
+		if arg == "--version" {
+			ShowVersion()
+			os.Exit(0)
+		}
 	}
 
 	// resolve all input files
