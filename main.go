@@ -52,7 +52,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Timestamp to make output dir unique
 	ts := time.Now().Format("20060102150405")
+	dir := fmt.Sprintf("%s_emlex", ts)
+	err := os.Mkdir(dir, os.ModePerm)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error: failed to create output directory")
+		os.Exit(1)
+	}
 
 	for _, email := range emails {
 		file, err := os.Open(email)
@@ -71,8 +78,8 @@ func main() {
 		fmt.Printf("(%d) %s\n", len(msg.Attachments), email)
 
 		if len(msg.Attachments) > 0 {
-			dir := filepath.Join(fmt.Sprintf("%s_emlex", ts), strings.TrimSuffix(filepath.Base(email), filepath.Ext(email)))
-			os.MkdirAll(dir, os.ModePerm)
+			attachDir := filepath.Join(dir, strings.TrimSuffix(filepath.Base(email), filepath.Ext(email)))
+			os.Mkdir(attachDir, os.ModePerm)
 			for _, attachment := range msg.Attachments {
 				os.WriteFile(filepath.Join(dir, attachment.FileName), attachment.Content, 0644)
 			}
