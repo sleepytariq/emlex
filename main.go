@@ -81,7 +81,7 @@ func main() {
 			attachDir := filepath.Join(dir, strings.TrimSuffix(filepath.Base(email), filepath.Ext(email)))
 			os.Mkdir(attachDir, os.ModePerm)
 			for _, attachment := range msg.Attachments {
-				os.WriteFile(filepath.Join(dir, attachment.FileName), attachment.Content, 0644)
+				os.WriteFile(filepath.Join(attachDir, attachment.FileName), attachment.Content, 0644)
 			}
 		}
 	}
