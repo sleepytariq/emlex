@@ -78,7 +78,16 @@ func main() {
 		fmt.Printf("(%d) %s\n", len(msg.Attachments), email)
 
 		if len(msg.Attachments) > 0 {
-			attachDir := filepath.Join(dir, strings.TrimSuffix(filepath.Base(email), filepath.Ext(email)))
+			var msgDateStr string
+			msgDate, err := msg.Date()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error: failed to parse date from %s\n", email)
+				msgDateStr = "00000000000000"
+			} else {
+				msgDateStr = msgDate.Format("20060102150405")
+			}
+			fileName := strings.TrimSuffix(filepath.Base(email), filepath.Ext(email))
+			attachDir := filepath.Join(dir, fmt.Sprintf("%s_%s", msgDateStr, fileName))
 			os.Mkdir(attachDir, os.ModePerm)
 			for _, attachment := range msg.Attachments {
 				os.WriteFile(filepath.Join(attachDir, attachment.FileName), attachment.Content, 0644)
