@@ -92,13 +92,14 @@ func ShowVersion() {
 }
 
 func ShowHelp() {
-	fmt.Println(`emlex email [email...]
+	fmt.Println(`emlex [flags] email [email...]
 	
     Extract attachments from multiple .eml files
 
 Examples:
   emlex msg1.eml msg2.eml msg3.eml
   emlex *.eml
+  emlex ./**/*.eml
 	
 Required:
   email            Path to .eml file(s)
