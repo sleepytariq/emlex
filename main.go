@@ -10,7 +10,7 @@ import (
 	"github.com/jhillyerd/enmime"
 )
 
-const version string = "0.1.2"
+const version string = "0.1.3"
 
 func main() {
 	if len(os.Args) == 1 {
