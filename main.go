@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/jhillyerd/enmime"
@@ -61,16 +62,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	var wg sync.WaitGroup
 	pool := semaphore.NewWeighted(8)
 
 	for _, email := range emails {
 		for !pool.TryAcquire(1) {
 		}
+		wg.Add(1)
 		go func() {
 			defer pool.Release(1)
 			ExtractAttachments(email, dir)
 		}()
 	}
+	wg.Wait()
 }
 
 func ExtractAttachments(path string, dir string) {
