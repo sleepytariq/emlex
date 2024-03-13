@@ -11,7 +11,7 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
-const version string = "0.2.0"
+const version string = "0.2.1"
 
 type Attachment struct {
 	Name string
