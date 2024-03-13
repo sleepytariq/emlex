@@ -13,6 +13,11 @@ import (
 
 const version string = "0.2.0"
 
+type Attachment struct {
+	Name string
+	Data []byte
+}
+
 func main() {
 	if len(os.Args) == 1 {
 		fmt.Println("Error: missing arguments, Use: -h")
@@ -71,44 +76,57 @@ func main() {
 		wg.Add(1)
 		go func() {
 			defer pool.Release(1)
-			ExtractAttachments(email, dir)
+			attachments, err := ExtractAttachments(email)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+			attachDir := filepath.Join(dir, filepath.Base(email))
+			err = SaveAttachments(attachDir, attachments)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+			wg.Done()
 		}()
 	}
 	wg.Wait()
 }
 
-func ExtractAttachments(path string, dir string) {
+func ExtractAttachments(path string) (*[]Attachment, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to open %s\n", path)
-		return
+		return nil, fmt.Errorf("failed to open %s", path)
 	}
 	defer file.Close()
 
 	msg, err := enmime.ReadEnvelope(file)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to parse %s\n", path)
-		return
+		return nil, fmt.Errorf("failed to parse %s", path)
 	}
 
-	fmt.Printf("(%d) %s\n", len(msg.Attachments), path)
+	if len(msg.Attachments) == 0 {
+		return nil, fmt.Errorf("%s does not contain attachments", path)
+	}
 
-	if len(msg.Attachments) > 0 {
-		var msgDateStr string
-		msgDate, err := msg.Date()
+	var attachments []Attachment
+
+	for _, attachment := range msg.Attachments {
+		attachments = append(attachments, Attachment{
+			Name: attachment.FileName,
+			Data: attachment.Content,
+		})
+	}
+	return &attachments, nil
+}
+
+func SaveAttachments(dir string, attachments *[]Attachment) error {
+	os.Mkdir(dir, os.ModePerm)
+	for _, attachment := range *attachments {
+		err := os.WriteFile(filepath.Join(dir, attachment.Name), attachment.Data, 0644)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: failed to parse date from %s\n", path)
-			msgDateStr = "00000000000000"
-		} else {
-			msgDateStr = msgDate.Format("20060102150405")
-		}
-		fileName := filepath.Base(path)
-		attachDir := filepath.Join(dir, fmt.Sprintf("%s_%s", msgDateStr, fileName))
-		os.Mkdir(attachDir, os.ModePerm)
-		for _, attachment := range msg.Attachments {
-			os.WriteFile(filepath.Join(attachDir, attachment.FileName), attachment.Content, 0644)
+			return fmt.Errorf("failed to save %s in %s", attachment.Name, dir)
 		}
 	}
+	return nil
 }
 
 func ShowVersion() {
