@@ -10,7 +10,7 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
-const version string = "0.1.3"
+const version string = "0.2.0"
 
 func main() {
 	if len(os.Args) == 1 {
