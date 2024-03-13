@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/jhillyerd/enmime"
+	"golang.org/x/sync/semaphore"
 )
 
 const version string = "0.1.3"
@@ -61,37 +61,48 @@ func main() {
 		os.Exit(1)
 	}
 
+	pool := semaphore.NewWeighted(8)
+
 	for _, email := range emails {
-		file, err := os.Open(email)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: failed to open %s\n", email)
-			continue
+		for !pool.TryAcquire(1) {
 		}
-		defer file.Close()
+		go func() {
+			defer pool.Release(1)
+			ExtractAttachments(email, dir)
+		}()
+	}
+}
 
-		msg, err := enmime.ReadEnvelope(file)
+func ExtractAttachments(path string, dir string) {
+	file, err := os.Open(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: failed to open %s\n", path)
+		return
+	}
+	defer file.Close()
+
+	msg, err := enmime.ReadEnvelope(file)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: failed to parse %s\n", path)
+		return
+	}
+
+	fmt.Printf("(%d) %s\n", len(msg.Attachments), path)
+
+	if len(msg.Attachments) > 0 {
+		var msgDateStr string
+		msgDate, err := msg.Date()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: failed to parse %s\n", email)
-			continue
+			fmt.Fprintf(os.Stderr, "Error: failed to parse date from %s\n", path)
+			msgDateStr = "00000000000000"
+		} else {
+			msgDateStr = msgDate.Format("20060102150405")
 		}
-
-		fmt.Printf("(%d) %s\n", len(msg.Attachments), email)
-
-		if len(msg.Attachments) > 0 {
-			var msgDateStr string
-			msgDate, err := msg.Date()
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error: failed to parse date from %s\n", email)
-				msgDateStr = "00000000000000"
-			} else {
-				msgDateStr = msgDate.Format("20060102150405")
-			}
-			fileName := strings.TrimSuffix(filepath.Base(email), filepath.Ext(email))
-			attachDir := filepath.Join(dir, fmt.Sprintf("%s_%s", msgDateStr, fileName))
-			os.Mkdir(attachDir, os.ModePerm)
-			for _, attachment := range msg.Attachments {
-				os.WriteFile(filepath.Join(attachDir, attachment.FileName), attachment.Content, 0644)
-			}
+		fileName := filepath.Base(path)
+		attachDir := filepath.Join(dir, fmt.Sprintf("%s_%s", msgDateStr, fileName))
+		os.Mkdir(attachDir, os.ModePerm)
+		for _, attachment := range msg.Attachments {
+			os.WriteFile(filepath.Join(attachDir, attachment.FileName), attachment.Content, 0644)
 		}
 	}
 }

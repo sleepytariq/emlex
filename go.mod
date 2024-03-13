@@ -2,7 +2,10 @@ module emlex
 
 go 1.22.1
 
-require github.com/jhillyerd/enmime v1.2.0
+require (
+	github.com/jhillyerd/enmime v1.2.0
+	golang.org/x/sync v0.6.0
+)
 
 require (
 	github.com/cention-sany/utf7 v0.0.0-20170124080048-26cad61bd60a // indirect
