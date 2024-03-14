@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/md5"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -80,7 +81,8 @@ func main() {
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 			}
-			attachDir := filepath.Join(dir, filepath.Base(email))
+			hash := md5.Sum([]byte(email))
+			attachDir := filepath.Join(dir, fmt.Sprintf("%s.%x", filepath.Base(email), hash[0:4]))
 			err = SaveAttachments(attachDir, attachments)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
@@ -119,7 +121,10 @@ func ExtractAttachments(path string) (*[]Attachment, error) {
 }
 
 func SaveAttachments(dir string, attachments *[]Attachment) error {
-	os.Mkdir(dir, os.ModePerm)
+	err := os.Mkdir(dir, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("failed to create %s", dir)
+	}
 	for _, attachment := range *attachments {
 		err := os.WriteFile(filepath.Join(dir, attachment.Name), attachment.Data, 0644)
 		if err != nil {
