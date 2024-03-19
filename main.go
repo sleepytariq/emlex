@@ -80,12 +80,14 @@ func main() {
 			attachments, err := ExtractAttachments(email)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
 			}
 			hash := md5.Sum([]byte(email))
 			attachDir := filepath.Join(dir, fmt.Sprintf("%s.%x", filepath.Base(email), hash[0:4]))
 			err = SaveAttachments(attachDir, attachments)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
 			}
 			wg.Done()
 		}()
