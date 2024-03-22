@@ -77,19 +77,19 @@ func main() {
 		wg.Add(1)
 		go func() {
 			defer pool.Release(1)
+			defer wg.Done()
 			attachments, err := ExtractAttachments(email)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return
 			}
 			hash := md5.Sum([]byte(email))
 			attachDir := filepath.Join(dir, fmt.Sprintf("%s.%x", filepath.Base(email), hash[0:4]))
 			err = SaveAttachments(attachDir, attachments)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return
 			}
-			wg.Done()
 		}()
 	}
 	wg.Wait()
