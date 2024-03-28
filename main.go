@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/jhillyerd/enmime"
-	"golang.org/x/sync/semaphore"
 )
 
 const version string = "0.2.4"
@@ -68,16 +67,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	var wg sync.WaitGroup
-	pool := semaphore.NewWeighted(8)
+	wg := new(sync.WaitGroup)
+	sem := make(chan bool, 8)
 
 	for _, email := range emails {
-		for !pool.TryAcquire(1) {
-		}
+		sem <- true
 		wg.Add(1)
 		go func() {
-			defer pool.Release(1)
-			defer wg.Done()
+			defer func() { wg.Done(); <-sem }()
 			attachments, err := ExtractAttachments(email)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
