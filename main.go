@@ -11,7 +11,7 @@ import (
 	"github.com/jhillyerd/enmime"
 )
 
-const version string = "0.2.4"
+const version string = "0.2.5"
 
 type Attachment struct {
 	Name string
