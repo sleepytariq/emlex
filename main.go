@@ -1,10 +1,10 @@
 package main
 
 import (
-	"crypto/md5"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -80,8 +80,7 @@ func main() {
 				fmt.Fprintln(os.Stderr, err)
 				return
 			}
-			hash := md5.Sum([]byte(email))
-			attachDir := filepath.Join(dir, fmt.Sprintf("%s.%x", filepath.Base(email), hash[0:4]))
+			attachDir := filepath.Join(dir, strings.ReplaceAll(filepath.Clean(email), string(os.PathSeparator), " → "))
 			err = SaveAttachments(attachDir, attachments)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
