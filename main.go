@@ -20,7 +20,7 @@ type Attachment struct {
 
 func main() {
 	if len(os.Args) == 1 {
-		fmt.Println("Error: missing arguments, Use: -h")
+		fmt.Println("missing arguments, Use: -h")
 		os.Exit(1)
 	}
 
@@ -41,7 +41,7 @@ func main() {
 	for _, input := range os.Args[1:] {
 		files, err := filepath.Glob(input)
 		if err != nil || len(files) == 0 {
-			fmt.Fprintf(os.Stderr, "Error: failed to resolve %s\n", input)
+			fmt.Fprintf(os.Stderr, "failed to resolve %s\n", input)
 			continue
 		}
 		for _, file := range files {
@@ -54,7 +54,7 @@ func main() {
 	}
 
 	if len(emails) == 0 {
-		fmt.Fprintln(os.Stderr, "Error: no valid files were passed")
+		fmt.Fprintln(os.Stderr, "no valid files were passed")
 		os.Exit(1)
 	}
 
@@ -63,7 +63,7 @@ func main() {
 	dir := fmt.Sprintf("%s_emlex", ts)
 	err := os.Mkdir(dir, os.ModePerm)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error: failed to create output directory")
+		fmt.Fprintln(os.Stderr, "failed to create output directory")
 		os.Exit(1)
 	}
 
