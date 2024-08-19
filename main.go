@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
-	"strings"
+	"regexp"
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jhillyerd/enmime"
 )
 
@@ -75,13 +77,18 @@ func main() {
 		wg.Add(1)
 		go func() {
 			defer func() { wg.Done(); <-sem }()
-			attachments, err := ExtractAttachments(email)
+			to, subject, attachments, err := ParseEmail(email)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				return
 			}
-			attachDir := filepath.Join(dir, strings.ReplaceAll(filepath.Clean(email), string(os.PathSeparator), " → "))
+			attachDir := filepath.Join(dir, to, RemoveIllegalChars(subject))
 			err = SaveAttachments(attachDir, attachments)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return
+			}
+			err = CopyFileToDst(email, attachDir)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				return
@@ -91,20 +98,20 @@ func main() {
 	wg.Wait()
 }
 
-func ExtractAttachments(path string) (*[]Attachment, error) {
+func ParseEmail(path string) (string, string, *[]Attachment, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open %s", path)
+		return "", "", nil, fmt.Errorf("failed to open %s", path)
 	}
 	defer file.Close()
 
 	msg, err := enmime.ReadEnvelope(file)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse %s", path)
+		return "", "", nil, fmt.Errorf("failed to parse %s", path)
 	}
 
 	if len(msg.Attachments) == 0 {
-		return nil, fmt.Errorf("%s does not contain attachments", path)
+		return "", "", nil, fmt.Errorf("%s does not contain attachments", path)
 	}
 
 	var attachments []Attachment
@@ -115,20 +122,59 @@ func ExtractAttachments(path string) (*[]Attachment, error) {
 			Data: attachment.Content,
 		})
 	}
-	return &attachments, nil
+
+	addressPattern := regexp.MustCompile(`[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}`)
+	to := msg.GetHeader("To")
+	to = addressPattern.FindString(to)
+
+	subject := msg.GetHeader("Subject")
+	if subject == "" {
+		subject = uuid.NewString()
+	}
+
+	return to, subject, &attachments, nil
 }
 
 func SaveAttachments(dir string, attachments *[]Attachment) error {
-	err := os.Mkdir(dir, os.ModePerm)
+	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("failed to create %s", dir)
 	}
 	for _, attachment := range *attachments {
+
+		// in case of empty filename
+		if attachment.Name == "" {
+			attachment.Name = uuid.NewString()
+		}
+
 		err := os.WriteFile(filepath.Join(dir, attachment.Name), attachment.Data, 0644)
 		if err != nil {
 			return fmt.Errorf("failed to save %s in %s", attachment.Name, dir)
 		}
 	}
+	return nil
+}
+
+func RemoveIllegalChars(s string) string {
+	pattern := regexp.MustCompile(`[/\\?%*:|"<>]`)
+	s = pattern.ReplaceAllString(s, "_")
+	return s
+}
+
+func CopyFileToDst(src string, dst string) error {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("failed to copy source email %s", src)
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.Create(filepath.Join(dst, "original.eml"))
+	if err != nil {
+		return fmt.Errorf("failed to copy source email %s", src)
+	}
+	defer dstFile.Close()
+
+	io.Copy(dstFile, srcFile)
 	return nil
 }
 
