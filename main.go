@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sync"
 	"time"
 
@@ -82,36 +83,38 @@ func main() {
 				fmt.Fprintln(os.Stderr, err)
 				return
 			}
-			attachDir := filepath.Join(dir, to, RemoveIllegalChars(subject))
-			err = SaveAttachments(attachDir, attachments)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				return
-			}
-			err = CopyFileToDst(email, attachDir)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				return
+			for _, address := range to {
+				attachDir := filepath.Join(dir, address, RemoveIllegalChars(subject))
+				err = SaveAttachments(attachDir, attachments)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, err)
+					return
+				}
+				err = CopyFileToDst(email, attachDir)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, err)
+					return
+				}
 			}
 		}()
 	}
 	wg.Wait()
 }
 
-func ParseEmail(path string) (string, string, *[]Attachment, error) {
+func ParseEmail(path string) ([]string, string, *[]Attachment, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return "", "", nil, fmt.Errorf("failed to open %s", path)
+		return nil, "", nil, fmt.Errorf("failed to open %s", path)
 	}
 	defer file.Close()
 
 	msg, err := enmime.ReadEnvelope(file)
 	if err != nil {
-		return "", "", nil, fmt.Errorf("failed to parse %s", path)
+		return nil, "", nil, fmt.Errorf("failed to parse %s", path)
 	}
 
 	if len(msg.Attachments) == 0 {
-		return "", "", nil, fmt.Errorf("%s does not contain attachments", path)
+		return nil, "", nil, fmt.Errorf("%s does not contain attachments", path)
 	}
 
 	var attachments []Attachment
@@ -124,8 +127,9 @@ func ParseEmail(path string) (string, string, *[]Attachment, error) {
 	}
 
 	addressPattern := regexp.MustCompile(`[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}`)
-	to := msg.GetHeader("To")
-	to = addressPattern.FindString(to)
+	to := addressPattern.FindAllString(msg.GetHeader("To"), -1)
+	slices.Sort(to)
+	to = slices.Compact(to)
 
 	subject := msg.GetHeader("Subject")
 	if subject == "" {
