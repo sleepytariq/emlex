@@ -168,13 +168,13 @@ func RemoveIllegalChars(s string) string {
 func CopyFileToDst(src string, dst string) error {
 	srcFile, err := os.Open(src)
 	if err != nil {
-		return fmt.Errorf("failed to copy source email %s", src)
+		return fmt.Errorf("failed to copy src file %s", src)
 	}
 	defer srcFile.Close()
 
 	dstFile, err := os.Create(filepath.Join(dst, "original.eml"))
 	if err != nil {
-		return fmt.Errorf("failed to copy source email %s", src)
+		return fmt.Errorf("failed to create dst file %s", src)
 	}
 	defer dstFile.Close()
 
