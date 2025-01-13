@@ -1,10 +1,10 @@
 module emlex
 
-go 1.22.1
+go 1.23.4
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/jhillyerd/enmime v1.2.0
+	github.com/jhillyerd/enmime v1.3.0
 )
 
 require (
@@ -16,6 +16,6 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
-	golang.org/x/net v0.28.0 // indirect
-	golang.org/x/text v0.17.0 // indirect
+	golang.org/x/net v0.34.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 )
