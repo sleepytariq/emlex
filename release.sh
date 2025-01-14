@@ -3,10 +3,7 @@
 REPO=$(dirname "$0")
 pushd "${REPO}" &> /dev/null
 
-# load .env for token
-set -a
-source .env
-set +a
+export GITHUB_TOKEN="$(gh auth token)"
 
 if [[ -z "${GITHUB_TOKEN}" ]]; then
     echo "GITHUB_TOKEN is not set"
