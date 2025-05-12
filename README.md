@@ -5,9 +5,7 @@ A tool to extract attachments from .eml files
 ## Installation
 
 - Download a prebuilt binary from [release page](https://github.com/sleepytariq/emlex/releases/latest)
-
-  _or_
-- `git clone https://github.com/sleepytariq/emlex && cd emlex && go build -ldflags="-s -w" .`
+- Build from source using `git clone https://github.com/sleepytariq/emlex && cd emlex && go build -ldflags="-s -w" .`
 
 ## Usage
 
